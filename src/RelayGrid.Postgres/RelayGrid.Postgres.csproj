@@ -2,7 +2,18 @@
   <PropertyGroup>
     <AssemblyName>Karzoun.RelayGrid.Postgres</AssemblyName>
     <RootNamespace>Karzoun.RelayGrid.Postgres</RootNamespace>
-    <Description>PostgreSQL durable journal and fenced lease store for RelayGrid.</Description>
+    <PackageId>Karzoun.RelayGrid.Postgres</PackageId>
+    <Authors>Mahmoud Karzoun</Authors>
+    <Description>PostgreSQL durable journal and worker for RelayGrid with partition-head FIFO claims, fenced leases, retries, dead-lettering and .NET telemetry hooks.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/mkarson1997/karzoun-relaygrid</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mkarson1997/karzoun-relaygrid.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>postgresql;durable-queue;leases;fencing;event-processing;telemetry;dotnet</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
   <ItemGroup>
@@ -11,5 +22,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Migrations/*.sql" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
