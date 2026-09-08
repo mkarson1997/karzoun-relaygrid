@@ -1,32 +1,37 @@
 # Roadmap
 
-## v0.1 - core runtime foundation
+## v0.1 - runtime and durability foundation
 
 - bounded partitioned channels
 - deterministic partition routing
-- FIFO per partition
-- cross-partition concurrency
-- bounded retries and dead-letter handoff
-- in-memory successful-work idempotency
+- FIFO per in-memory partition
+- bounded retries and explicit dead-letter handoff
+- process-local successful-work idempotency
 - graceful drain semantics
-- deterministic concurrency/stress tests
+- PostgreSQL durable journal
+- head-of-partition FIFO claims
+- lease ownership and fencing tokens
+- retry availability without overtaking
+- transactional dead-letter transition
+- expired-lease crash recovery
+- Testcontainers integration evidence
 
-## v0.2 - durable journal and recovery
+## v0.2 - worker orchestration and durable idempotency
 
-- PostgreSQL event journal
-- atomic state transitions
-- durable idempotency records
-- leases with fencing tokens
-- stale-worker rejection
-- crash/restart recovery proven with Testcontainers
+- bridge durable claims into handler execution
+- durable successful-key coordination with explicit concurrent-key semantics
+- stale-worker outcome rejection end to end
+- bounded polling/backoff across partitions
+- shutdown handoff for durable workers
+- fault injection around database interruption
 
-## v0.3 - operations and performance
+## v0.3 - operations and measured performance
 
 - OpenTelemetry traces
 - Prometheus-compatible metrics
 - BenchmarkDotNet harness
 - measured throughput and latency under documented hardware/runtime settings
-- fault-injection coverage around database and worker interruption
+- saturation/backpressure measurements
 
 ## Not promised
 

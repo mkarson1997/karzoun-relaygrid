@@ -1,29 +1,33 @@
 # Architecture
 
-## Admission and partitioning
+## In-memory admission and partitioning
 
-Each partition owns a bounded `Channel<RelayEnvelope>`. `PublishAsync` routes a message using stable FNV-1a over the UTF-8 partition key and waits when that partition is full. `TryPublish` is the non-blocking admission path.
+Each runtime partition owns a bounded `Channel<RelayEnvelope>`. `PublishAsync` routes with stable FNV-1a and waits when the target partition is full. Each partition has one reader, so accepted work is FIFO within that partition while different partitions can run concurrently.
 
-Backpressure is therefore local to the target partition. A hot partition can fill and block its own publishers without converting other partition queues into unbounded storage.
+## Durable journal
 
-## Ordering
+The PostgreSQL layer stores every envelope with a monotonic `BIGSERIAL` sequence and explicit partition index. Durable states are `Pending`, `Leased`, `Completed`, and `DeadLettered`.
 
-Each partition has exactly one reader task. Messages accepted into the same partition are handled sequentially in channel order. RelayGrid does not claim a global order across partitions.
+### Partition head rule
 
-## Retries and dead letters
+A claim first identifies the lowest-sequence pending or leased row for a partition. Only that row may become a candidate. If it has a future retry time or an unexpired lease, the claim returns no work. Later rows cannot overtake it.
 
-A handler receives at most `MaxAttempts`. Between failed attempts, RelayGrid applies deterministic capped exponential backoff through an injectable `IRelayDelay`. Exhausted work is handed to the caller-provided `IDeadLetterSink`.
+The candidate row is locked with `FOR UPDATE ... SKIP LOCKED`, allowing separate partitions and separate database workers to make progress without double-claiming the same head row.
 
-A dead-letter sink failure is treated as a runtime fault. Silently dropping a poison message is not an accepted fallback.
+### Fencing
 
-## Idempotency
+Every successful claim increments `fence_token`. Completion, retry, and dead-letter transitions require message ID, current lease owner, and exact fence token. Once an expired lease is reclaimed, an older worker is stale and its transition affects zero rows, which RelayGrid surfaces as `StaleRelayLeaseException`.
 
-The in-memory coordinator tracks successful idempotency keys and coordinates concurrent work for the same key. A duplicate waits for in-flight work. If the leader succeeds, the duplicate is suppressed. If the leader fails through to dead-letter, the key is not persisted as successful and a later duplicate may attempt processing again.
+### Retry and dead letter
 
-This is process-local idempotency, not durable exactly-once delivery.
+Retry moves the current leased head back to `Pending`, records failure metadata, and sets `available_at`. Because it remains the earliest active row, later work in that partition stays blocked until the retry becomes claimable or is terminally resolved.
 
-## Shutdown
+Dead-lettering updates the message and inserts its dead-letter record in one PostgreSQL transaction. A failure before commit leaves the original lease intact rather than exposing a half-transition.
 
-The first `StopAsync` transition closes all writers and waits for partition readers to drain. The cancellation token passed to `StopAsync` only cancels that caller's wait. It is deliberately not forwarded to handlers that were already accepted.
+## Schema application
 
-Later durability work must preserve these semantics while adding crash recovery and fencing.
+Schema version 1 is an embedded SQL resource. Application runs inside a transaction guarded by a PostgreSQL advisory transaction lock. Re-applying the same version is idempotent.
+
+## Boundaries
+
+The durable journal provides persistence, ordering and fencing primitives. It does not by itself provide exactly-once handler execution or durable cross-message idempotency. Those require additional protocol semantics beyond storing a successful row transition.
