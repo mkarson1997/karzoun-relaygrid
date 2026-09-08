@@ -24,14 +24,38 @@ jobs:
       - name: Run deterministic runtime suite
         run: dotnet run --project tests/RelayGrid.Tests/RelayGrid.Tests.csproj -c Release --no-build
 
+  postgres-integration:
+    name: PostgreSQL Testcontainers integration
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore and generate lock files
+        run: dotnet restore tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj --use-lock-file
+      - name: Build durable layer
+        run: dotnet build tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release --no-restore -warnaserror
+      - name: Run PostgreSQL integration suite
+        run: dotnet run --project tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release --no-build
+      - name: Capture generated NuGet lock files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-lockfiles
+          path: |
+            src/RelayGrid.Postgres/packages.lock.json
+            tests/RelayGrid.Postgres.Tests/packages.lock.json
+          if-no-files-found: error
+
   gate:
     name: CI Gate
     if: always()
-    needs: [build-test]
+    needs: [build-test, postgres-integration]
     runs-on: ubuntu-24.04
     steps:
       - name: Enforce required jobs
-        if: needs.build-test.result != 'success'
+        if: needs.build-test.result != 'success' || needs.postgres-integration.result != 'success'
         run: exit 1
       - name: Confirm green build
         run: echo "RelayGrid CI gate is green."

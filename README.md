@@ -4,45 +4,56 @@
 [![CodeQL](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/codeql.yml/badge.svg)](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/codeql.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-RelayGrid is a C#/.NET event-processing runtime focused on bounded admission, deterministic partition routing, per-partition FIFO processing, retry semantics, successful-work idempotency, and explicit dead-letter handling.
+RelayGrid is a C#/.NET event-processing runtime focused on bounded admission, deterministic partition routing, per-partition FIFO processing, retry semantics, explicit dead-letter handling, and durable PostgreSQL work leasing.
 
-The current v0.1 foundation is intentionally **in-memory**. PostgreSQL durability, leases/fencing, crash recovery, OpenTelemetry, Prometheus metrics, and measured benchmarks are roadmap work and are not claimed yet.
+## Core runtime
 
-## Core semantics
-
-- `System.Threading.Channels` bounded queue per partition with `BoundedChannelFullMode.Wait`
-- stable FNV-1a UTF-8 partition routing rather than process-randomized `string.GetHashCode()`
-- one sequential reader per partition, preserving FIFO for messages routed to that partition
-- parallel processing across different partitions
+- bounded `System.Threading.Channels` queue per partition
+- stable FNV-1a UTF-8 partition routing
+- FIFO processing within a partition with concurrency across partitions
 - bounded retry count with deterministic capped exponential backoff
-- explicit dead-letter sink after retry exhaustion
-- idempotency coordination that suppresses duplicate work after a successful key completes
-- graceful stop closes admission and drains already accepted work
-- cancelling a caller's `StopAsync` wait does **not** cancel accepted handlers
-- runtime snapshot counters for accepted, succeeded, duplicate-suppressed, retry, dead-letter and active-handler counts
+- process-local successful-work idempotency
+- graceful stop that drains accepted work without forwarding stop-wait cancellation into handlers
+
+## PostgreSQL durable journal
+
+`Karzoun.RelayGrid.Postgres` adds a durable store using Npgsql:
+
+- versioned schema application under a PostgreSQL advisory transaction lock
+- durable envelopes, payloads, partition indices and monotonic database sequence numbers
+- head-of-partition claims: an active or delayed head item blocks later work in that partition
+- lease owner + monotonically increasing fencing token
+- expired lease reclamation after worker loss
+- stale workers cannot complete, retry or dead-letter after a newer lease is issued
+- retry transition persists failure metadata and future availability without allowing overtaking
+- dead-letter state change + dead-letter record in one database transaction
+- completed/dead-lettered work unblocks the next partition item
+
+The Testcontainers integration suite proves schema re-application, persistence across new Npgsql data sources, lease fencing, retry blocking, transactional dead-letter progression, and expired-lease crash recovery against real PostgreSQL.
 
 ## Important boundaries
 
-RelayGrid v0.1 does **not** claim:
+RelayGrid does **not** claim:
 
-- durable delivery across process crashes
-- exactly-once processing
-- distributed ordering
-- distributed consensus or replicated queue semantics
-- persistent idempotency
+- exactly-once delivery
+- global or distributed ordering
+- consensus or replicated-queue semantics
+- durable cross-message idempotency yet
+- benchmark throughput or latency numbers yet
 
-A dead-letter sink is supplied explicitly by the caller. If that sink itself fails, RelayGrid faults the runtime instead of silently discarding the message.
+The in-memory runtime and durable journal are deliberately separate layers today. A later worker orchestration milestone can connect them while preserving the documented lease and ordering semantics.
 
 ## Build and test
 
-Requires the .NET 10 SDK.
+Requires the .NET 10 SDK. PostgreSQL integration tests also require Docker.
 
 ```bash
-dotnet restore tests/RelayGrid.Tests/RelayGrid.Tests.csproj
 dotnet build tests/RelayGrid.Tests/RelayGrid.Tests.csproj -c Release -warnaserror
 dotnet run --project tests/RelayGrid.Tests/RelayGrid.Tests.csproj -c Release --no-build
-```
 
-The test project is a dependency-free deterministic executable suite. It exercises FIFO ordering, cross-partition concurrency, bounded backpressure, retries, dead-lettering, idempotency, stop-wait cancellation semantics, and a multi-partition stress run.
+dotnet restore tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj --use-lock-file
+dotnet build tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release --no-restore -warnaserror
+dotnet run --project tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release --no-build
+```
 
 See [Architecture](docs/architecture.md), [Security](SECURITY.md), [Contributing](CONTRIBUTING.md), and the [Roadmap](ROADMAP.md).

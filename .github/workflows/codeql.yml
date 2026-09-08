@@ -25,6 +25,6 @@ jobs:
           languages: csharp
           build-mode: manual
           queries: security-extended
-      - name: Build
-        run: dotnet build tests/RelayGrid.Tests/RelayGrid.Tests.csproj -c Release
+      - name: Build core and PostgreSQL layer
+        run: dotnet build tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release
       - uses: github/codeql-action/analyze@v3
