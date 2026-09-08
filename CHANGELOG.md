@@ -4,6 +4,8 @@ All notable changes are documented here.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-08
+
 ### Added
 
 - .NET 10 in-memory RelayGrid runtime foundation.
@@ -18,3 +20,4 @@ All notable changes are documented here.
 - Graceful durable-worker stop semantics that preserve already claimed handler execution.
 - Deterministic core suite and PostgreSQL Testcontainers integration suite.
 - CI and CodeQL workflows.
+- NuGet package metadata, symbol packages, SHA-256 release manifest and tag-driven release automation.
