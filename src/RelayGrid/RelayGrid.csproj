@@ -2,6 +2,20 @@
   <PropertyGroup>
     <AssemblyName>Karzoun.RelayGrid</AssemblyName>
     <RootNamespace>Karzoun.RelayGrid</RootNamespace>
-    <Description>Bounded partitioned event relay runtime with explicit retry, idempotency and dead-letter semantics.</Description>
+    <PackageId>Karzoun.RelayGrid</PackageId>
+    <Authors>Mahmoud Karzoun</Authors>
+    <Description>Bounded partitioned event relay runtime with FIFO partition processing, retries, process-local idempotency and dead-letter semantics.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/mkarson1997/karzoun-relaygrid</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mkarson1997/karzoun-relaygrid.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>event-processing;channels;backpressure;partitioning;retry;dead-letter;dotnet</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 </Project>
