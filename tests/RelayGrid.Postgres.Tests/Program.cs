@@ -10,8 +10,7 @@ internal static class Program
 {
     public static async Task<int> Main()
     {
-        await using var container = new PostgreSqlBuilder()
-            .WithImage("postgres:17-alpine")
+        await using var container = new PostgreSqlBuilder("postgres:17-alpine")
             .WithDatabase("relaygrid")
             .WithUsername("relaygrid")
             .WithPassword("relaygrid-test")
@@ -205,9 +204,8 @@ internal static class Assert
     }
 
     public static void Equal<T>(T expected, T actual)
-        where T : IEquatable<T>
     {
-        if (!expected.Equals(actual))
+        if (!EqualityComparer<T>.Default.Equals(expected, actual))
         {
             throw new InvalidOperationException($"Expected '{expected}', got '{actual}'.");
         }

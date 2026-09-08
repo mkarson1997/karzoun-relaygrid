@@ -25,6 +25,8 @@ jobs:
           languages: csharp
           build-mode: manual
           queries: security-extended
+      - name: Restore from committed lock files
+        run: dotnet restore tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj --locked-mode
       - name: Build core and PostgreSQL layer
-        run: dotnet build tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release
+        run: dotnet build tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release --no-restore
       - uses: github/codeql-action/analyze@v3

@@ -32,21 +32,12 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-      - name: Restore and generate lock files
-        run: dotnet restore tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj --use-lock-file
+      - name: Restore from committed lock files
+        run: dotnet restore tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj --locked-mode
       - name: Build durable layer
         run: dotnet build tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release --no-restore -warnaserror
       - name: Run PostgreSQL integration suite
         run: dotnet run --project tests/RelayGrid.Postgres.Tests/RelayGrid.Postgres.Tests.csproj -c Release --no-build
-      - name: Capture generated NuGet lock files
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: postgres-lockfiles
-          path: |
-            src/RelayGrid.Postgres/packages.lock.json
-            tests/RelayGrid.Postgres.Tests/packages.lock.json
-          if-no-files-found: error
 
   gate:
     name: CI Gate
