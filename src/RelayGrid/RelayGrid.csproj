@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Karzoun.RelayGrid</AssemblyName>
+    <RootNamespace>Karzoun.RelayGrid</RootNamespace>
+    <Description>Bounded partitioned event relay runtime with explicit retry, idempotency and dead-letter semantics.</Description>
+  </PropertyGroup>
+</Project>
