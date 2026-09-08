@@ -11,6 +11,12 @@ public sealed class PostgresRelayJournal(NpgsqlDataSource dataSource)
         lease_until, created_at, last_error_type, last_error_message
         """;
 
+    private const string SelectMessageAliasColumns = """
+        m.id, m.sequence, m.message_id, m.idempotency_key, m.partition_key, m.partition_index,
+        m.payload, m.state, m.attempt_count, m.available_at, m.lease_owner, m.fence_token,
+        m.lease_until, m.created_at, m.last_error_type, m.last_error_message
+        """;
+
     private readonly NpgsqlDataSource _dataSource = dataSource ?? throw new ArgumentNullException(nameof(dataSource));
 
     public async Task<DurableRelayMessage> EnqueueAsync(
@@ -92,7 +98,7 @@ public sealed class PostgresRelayJournal(NpgsqlDataSource dataSource)
                 lease_until = clock_timestamp() + @lease_duration
             FROM candidate
             WHERE m.id = candidate.id
-            RETURNING {SelectColumns};
+            RETURNING {SelectMessageAliasColumns};
             """);
 
         command.Parameters.AddWithValue("partition_index", partitionIndex);
