@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/ci.yml/badge.svg)](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/codeql.yml/badge.svg)](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/codeql.yml)
+[![Release](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/release.yml/badge.svg)](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/release.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 RelayGrid is a C#/.NET event-processing engine focused on bounded admission, deterministic partition routing, per-partition FIFO processing, explicit retry/dead-letter semantics, and durable PostgreSQL work leasing.
@@ -44,6 +45,15 @@ The PostgreSQL worker emits standard .NET diagnostics without requiring an expor
 - processing spans tagged with partition, attempt, fence token and outcome
 
 Applications can attach OpenTelemetry or another `ActivityListener`/`MeterListener` externally.
+
+## Distribution
+
+Versioned releases publish two NuGet packages:
+
+- `Karzoun.RelayGrid`
+- `Karzoun.RelayGrid.Postgres`
+
+The GitHub Release also contains both `.nupkg` files, both `.snupkg` symbol packages and `SHA256SUMS.txt`. Primary NuGet packages are published to GitHub Packages and receive GitHub build-provenance attestations. After configuring the repository's GitHub Packages NuGet source, applications can reference the package that matches the layer they need.
 
 ## Important boundaries
 
