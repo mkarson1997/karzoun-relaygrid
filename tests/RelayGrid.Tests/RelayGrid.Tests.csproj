@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Karzoun.RelayGrid.Tests</AssemblyName>
+    <RootNamespace>Karzoun.RelayGrid.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/RelayGrid/RelayGrid.csproj" />
+  </ItemGroup>
+</Project>
