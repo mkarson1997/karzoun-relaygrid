@@ -27,6 +27,10 @@ internal static class Program
             ("retry delay blocks partition overtaking", RetryDelayBlocksOvertakingAsync),
             ("dead-letter transaction unblocks next item", DeadLetterUnblocksNextAsync),
             ("expired lease is reclaimed after worker crash", ExpiredLeaseIsReclaimedAsync),
+            ("durable worker completes successful work", DurableWorkerScenarios.SuccessfulProcessingCompletesAsync),
+            ("durable worker retry exhaustion dead-letters", DurableWorkerScenarios.RetryExhaustionDeadLettersAsync),
+            ("durable worker preserves same-partition order", DurableWorkerScenarios.SamePartitionWorkerPreservesOrderAsync),
+            ("durable worker graceful stop preserves active work", DurableWorkerScenarios.GracefulStopDoesNotCancelClaimedHandlerAsync),
         };
 
         int failed = 0;
