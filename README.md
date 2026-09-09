@@ -5,7 +5,41 @@
 [![Release](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/release.yml/badge.svg)](https://github.com/mkarson1997/karzoun-relaygrid/actions/workflows/release.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-RelayGrid is a C#/.NET event-processing engine focused on bounded admission, deterministic partition routing, per-partition FIFO processing, explicit retry/dead-letter semantics, and durable PostgreSQL work leasing.
+RelayGrid is a C#/.NET 10 event-processing engine focused on bounded admission, deterministic partition routing, per-partition FIFO processing, explicit retry/dead-letter semantics, and durable PostgreSQL work leasing.
+
+It is built as a compact systems-engineering project: concurrency, ordering, backpressure, durable state transitions, fencing, recovery and supply-chain controls are explicit rather than hidden behind a framework.
+
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+    P[Publisher] --> R[Stable partition router]
+    R --> Q[Bounded per-partition queues]
+    Q --> H[Handler]
+    P --> J[(PostgreSQL journal)]
+    J --> C[Head-of-partition claim]
+    C --> L[Fenced lease]
+    L --> H
+    H --> OK[Complete]
+    H --> RETRY[Retry]
+    H --> DL[Dead letter]
+```
+
+The in-memory layer uses bounded `System.Threading.Channels`; the durable layer adds PostgreSQL journaling, head-of-partition claiming and lease fencing. See the [architecture document](docs/architecture.md) for the full execution and recovery model.
+
+## Engineering proof points
+
+| Area | What the repository demonstrates |
+| --- | --- |
+| Concurrency | FIFO within a partition with concurrency across independent partitions. |
+| Backpressure | Bounded queues make admission pressure explicit instead of allowing unbounded memory growth. |
+| Determinism | Stable FNV-1a routing and deterministic capped retry backoff. |
+| Durability | PostgreSQL journal with explicit lifecycle states and monotonic sequence numbers. |
+| Distributed-worker safety | Lease owner plus monotonically increasing fencing token rejects stale worker transitions. |
+| Recovery | Expired leases can be reclaimed without allowing an older worker to overwrite newer state. |
+| Testing | Deterministic runtime suite plus Testcontainers integration tests against real PostgreSQL. |
+| Security | CodeQL `security-extended`, least-privilege workflow permissions and immutable SHA-pinned GitHub Actions. |
+| Release engineering | Versioned NuGet packages, symbols, SHA-256 manifest and build-provenance attestations. |
 
 ## Core runtime
 
@@ -54,6 +88,15 @@ Versioned releases publish two NuGet packages:
 - `Karzoun.RelayGrid.Postgres`
 
 The GitHub Release also contains both `.nupkg` files, both `.snupkg` symbol packages and `SHA256SUMS.txt`. Primary NuGet packages are published to GitHub Packages and receive GitHub build-provenance attestations. After configuring the repository's GitHub Packages NuGet source, applications can reference the package that matches the layer they need.
+
+## Release and supply-chain controls
+
+- CI builds with warnings as errors and runs deterministic + PostgreSQL Testcontainers suites
+- CodeQL analyzes C# with `security-extended` queries
+- third-party GitHub Actions are pinned to reviewed immutable commit SHAs
+- release packaging is validated on pull requests before tag publication
+- release artifacts include NuGet symbols and a SHA-256 checksum manifest
+- primary packages receive GitHub build-provenance attestations
 
 ## Important boundaries
 
